@@ -40,47 +40,20 @@ const createTask = async (req, res) => {
     };
 }
 
-const getallTask = async (req, res) => {
-    const { token } = req.body;
-
-    let decodedToken;
+const getdetailTask = async (req, res) => {
+    const task_id = req.body.task_id;
     try {
-        decodedToken = jwt.verify(token, JWT_SECRET);
+        const task = await Tasks.findById(task_id);
+        res.status(200).json({
+            status: 'success',
+            data: task
+        })
     } catch (err) {
-        return res.status(404).json({
+        res.status(404).json({
             status: 'fail',
-            message: 'Invalid token'
-        });
+            message: err.message
+        })
     }
-
-    const userId = decodedToken.userId;
-    const user = await Users.findById(userId);
-
-    if (!user) {
-        return res.status(404).json({
-            status: 'fail',
-            message: 'User not found'
-        });
-    }
-
-    let tasks;
-    if (user.role === 'admin') {
-        tasks = await Tasks.find();
-    } else {
-        tasks = await Tasks.find({ creator_id: userId });
-    }
-
-    const { status } = req.query;
-    if (status) {
-        tasks = tasks.filter(task => task.status === status);
-    }
-
-    tasks.sort((a, b) => b.createdAt - a.createdAt);
-
-    res.status(200).json({
-        status: 'success',
-        data: tasks
-    });
 }
 
 const updateTask = async (req, res) => {
